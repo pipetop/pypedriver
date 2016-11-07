@@ -25,6 +25,9 @@ class Model:
         'OrganizationField': 'organizationFields',
         'PersonField': 'personFields',
         'ProductField': 'productFields',
+        'Participant': 'deals/:id/participants',
+        'ActivityDeal': 'deals/:id/activities',
+        'FollowerDeal': 'deals/:id/followers'
     }
 
     def __init__(self, name, client, custom_fields=None):
@@ -152,6 +155,9 @@ class Model:
         if sort:
             params.update({'sort': sort})
 
+        if '/:id/' in self.__path:
+            self.__path = self.__path.replace('/:id/', '/' + str(filter_id) + '/')
+
         response = self.__client.request(
             method='GET',
             path=self.__path,
@@ -213,21 +219,22 @@ class Model:
         run = True
         while run:
             response = self.fetch_raw(filter_id, current, 50)
-            if response['success'] and 'additional_data' not in response:
-                break
-            pagination = response['additional_data']['pagination']
-            if pagination['more_items_in_collection']:
-                current += 50
-            else:
+
+            if response['success']:
                 run = False
-            for data in response['data'] or []:
+            if 'additional_data' in response:
+                if 'pagination' in response['additional_data']:
+                    pagination = response['additional_data']['pagination']
+
+                    if pagination['more_items_in_collection']:
+                        current += 50
+                        run = True
+            for data in response['data']:
+
                 if limit and yielded >= limit:
                     break
                 yielded += 1
                 yield getattr(self.__client, self.__name)(**data)
-            else:
-                continue
-            break
 
     def complete(self):
         """Complete self
