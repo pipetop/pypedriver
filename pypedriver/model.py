@@ -229,12 +229,14 @@ class Model:
                     if pagination['more_items_in_collection']:
                         current += 50
                         run = True
-            for data in response['data']:
-
-                if limit and yielded >= limit:
-                    break
-                yielded += 1
-                yield getattr(self.__client, self.__name)(**data)
+            if not response['data']:
+                run = False
+            else:
+                for data in response['data']:
+                    if limit and yielded >= limit:
+                        break
+                    yielded += 1
+                    yield getattr(self.__client, self.__name)(**data)
 
     def complete(self):
         """Complete self
