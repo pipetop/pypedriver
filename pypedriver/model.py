@@ -164,7 +164,7 @@ class Model:
             params=params,
         )
         if 'error' in response:
-            raise ConnectionError(response['error'] + response['error_info'])
+            raise ConnectionError(response['error'] + response.get('error_info', ''))
         if not self.__attributes:
             return response
         attrs = self.__attributes.items()
